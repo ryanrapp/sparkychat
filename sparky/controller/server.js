@@ -3,13 +3,16 @@
 */
 var net = require('net');
 var SocketController = require('./socket.js');
+var RoomModel = require('../model/room.js');
+var RoomController = require('./room.js');
 
 var server;
 var sockets = [];
-
+var rooms = {}; //hash of room controllers by room name
 
 function ServerController() {
-  /*no public variables*/
+  /* Define server-wide settings */
+  this.allowedFontColors = {red: true, green: true, blue: true};
 }
 
 /*
@@ -36,23 +39,54 @@ ServerController.prototype.start = function() {
   server = net.createServer(_newSocket);
   server.serverController = this;
 
-  // Listen on port 8888
-  server.listen(8888);
+  // Listen on port 9399
+  server.listen(9399);
+
+  console.log('Server is running. Press ctrl+c to stop.')
 }
 ServerController.prototype.stop = function() {
   server.close();
 }
 
 ServerController.prototype.isUserLoggedIn = function(login) {
+  return this.findSocketByLogin(login) !== null;
+}
+
+ServerController.prototype.findSocketByLogin = function(login) {
   //todo (rrapp): Improve performance by keeping hash
   for(var i=0; i<sockets.length; i++) {
     if (sockets[i].currentUser !== null) {
       if (sockets[i].currentUser.login === login) {
-        return true;
+        return sockets[i];
       }
     }
   }
-  return false;
+  return null;
+}
+
+ServerController.prototype.findRoomByName = function(roomname) {
+  //todo (rrapp): Improve performance by keeping hash
+  if (rooms[roomname]) {
+    return rooms[roomname];
+  }
+  return null;
+}
+
+ServerController.prototype.createRoom = function(roomname) {
+  room = new RoomModel(roomname);
+  roomController = new RoomController(room);
+  rooms[roomname] = roomController;
+  return roomController;
+}
+
+ServerController.prototype.getRooms = function() {
+  var results = [];
+  for (var i in rooms) {
+    if (rooms.hasOwnProperty(i)) {
+      results.push(rooms[i]);
+    }
+  }
+  return results;
 }
 
 module.exports = ServerController;
