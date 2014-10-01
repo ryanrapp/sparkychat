@@ -23,8 +23,8 @@ function SocketController(parent, new_socket) {
   this.socket.on('data', function(data) {
     _receiveData.call(that, data);
   });
-  this.socket.on('end', function() {
-    that.serverController.closeSocket(that.socket);
+  this.socket.on('end', function(ended_socket) {
+    that.serverController.closeSocket(that);
   });
   this.currentUser = null;
   this.currentRoom = null;
@@ -122,7 +122,7 @@ var commands = {
         this.currentRoom.removeParticipant(this);
         this.currentRoom = null;
       }
-      this.socket.end('BYE');
+      this.socket.end('BYE\n');
     }
   },
   whisper: {
